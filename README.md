@@ -131,6 +131,16 @@ Summary : Content is accurate and exam-relevant for UPSC...
 This architecture scales directly to ContentKosh's LMS pipeline — each node can become a tool (n8n trigger, database write, content validator).
 
 ---
+## Extensibility: ContentKosh Roadmap Alignment
+
+| Current Node | Future Extension | Business Value |
+|--------------|------------------|----------------|
+| `generate_notes` | Add `generate_flashcards` | Spaced repetition feature |
+| `review_quality` | `plagiarism_check` node | Originality compliance |
+| `assemble_package` | `translate_to_hindi` node | Regional language expansion |
+| New Node: `difficulty_adjuster` | Dynamically scale JEE vs Class 10 | Single agent, multiple exams |
+
+The graph architecture supports these as drop-in nodes without pipeline rewrites.
 
 ## Author
 
