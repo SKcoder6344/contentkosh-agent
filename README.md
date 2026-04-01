@@ -25,6 +25,19 @@ A stateful, multi-step AI agent that automates educational content creation for 
 
 ---
 
+## Why This Matters
+
+ContentKosh needs agents that don't just generate—they **validate** before delivery. This architecture solves three production pain points:
+
+**Stateful Quality Gates**  
+Node 3 acts as a safety checkpoint. Unlike simple chains that output unchecked content, this agent reviews its own work (factual accuracy + relevance) before assembly. Critical for ed-tech where wrong MCQ answers damage credibility.
+
+**White-Label Ready**  
+Node 4 outputs structured packages with consistent formatting (headers, metadata, quality scores). Drops directly into ContentKosh's LMS without post-processing—unlike raw LLM text that needs manual cleanup.
+
+**Modular Scaling**  
+LangGraph nodes are swappable. Add a "Difficulty Adapter" node for JEE vs Class 10, or a "Regional Language" node for Hindi/Tamil—without rebuilding the pipeline. This mirrors ContentKosh's multi-exam, multi-language roadmap.
+
 ## Stack
 
 | Component | Tech |
@@ -36,6 +49,7 @@ A stateful, multi-step AI agent that automates educational content creation for 
 | Output | Structured, white-label-ready text package |
 
 ---
+
 
 ## Setup
 
