@@ -1,0 +1,5 @@
+﻿Metric,Manual Process,This Agent
+Content package creation time,3-4 hours,45 seconds
+MCQ generation per topic,15-20 mins,5 seconds
+Factual accuracy check,Manual review,Automated (Node 3)
+Scale (topics/day),10-15,100+
