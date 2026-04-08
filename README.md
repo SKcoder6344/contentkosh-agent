@@ -1,13 +1,18 @@
 # ContentKosh AI Content Agent
-### LangGraph + OpenAI | Multi-Step Educational Content Generation
+### LangGraph + OpenAI | Stateful Multi-Step Educational Content Generation
 
-Built as a proof-of-work demo for the **AI Agent Developer** role at ContentKosh.
+> Built as a proof-of-work demo for the **AI Agent Developer** role at ContentKosh.
+
+![CI](https://github.com/SKcoder6344/contentkosh-agent/actions/workflows/ci.yml/badge.svg)
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Python](https://img.shields.io/badge/python-3.11-blue.svg)
+![LangGraph](https://img.shields.io/badge/LangGraph-stateful-orange)
 
 ---
 
-## What This Does
+## What It Does
 
-A stateful, multi-step AI agent that automates educational content creation for coaching institutes. Given a topic and exam target, it runs a 4-node LangGraph pipeline:
+A stateful, multi-step AI agent that automates educational content creation for coaching institutes. Given a topic and exam target, it executes a 4-node LangGraph pipeline:
 
 ```
 [Topic Input]
@@ -23,35 +28,38 @@ A stateful, multi-step AI agent that automates educational content creation for 
 [Output Package]
 ```
 
----
-
-## Why This Matters
-
-ContentKosh needs agents that don't just generate—they **validate** before delivery. This architecture solves three production pain points:
-
-**Stateful Quality Gates**  
-Node 3 acts as a safety checkpoint. Unlike simple chains that output unchecked content, this agent reviews its own work (factual accuracy + relevance) before assembly. Critical for ed-tech where wrong MCQ answers damage credibility.
-
-**White-Label Ready**  
-Node 4 outputs structured packages with consistent formatting (headers, metadata, quality scores). Drops directly into ContentKosh's LMS without post-processing—unlike raw LLM text that needs manual cleanup.
-
-**Modular Scaling**  
-LangGraph nodes are swappable. Add a "Difficulty Adapter" node for JEE vs Class 10, or a "Regional Language" node for Hindi/Tamil—without rebuilding the pipeline. This mirrors ContentKosh's multi-exam, multi-language roadmap.
-
-## Stack
-
-| Component | Tech |
-|---|---|
-| Agent framework | LangGraph (stateful multi-step) |
-| LLM | OpenAI GPT-4o-mini |
-| Orchestration | LangChain `ChatOpenAI` |
-| State management | `TypedDict` state across all nodes |
-| Output | Structured, white-label-ready text package |
+**Supported exams:** UPSC · SSC CGL · CUET · Class 10 Boards · State PCS · NEET · JEE
 
 ---
 
+## Why This Architecture
 
-## Setup
+| Feature | Simple LLM Call | This Agent |
+|---|---|---|
+| State shared across steps | ❌ | ✅ MCQs use notes as context |
+| Quality gate before output | ❌ | ✅ Node 3 flags errors before delivery |
+| Modular — swap any node | ❌ | ✅ Add translation, difficulty, plagiarism nodes |
+| Scales to parallel branches | ❌ | ✅ LangGraph supports async + parallel nodes |
+| Cost control | ❌ | ✅ Per-node token caps + session rate limiting |
+
+---
+
+## Production Features
+
+- **Structured logging** (`logging` module) at every pipeline node
+- **Input validation** with descriptive `ValueError` / `EnvironmentError` messages
+- **Per-node `max_tokens` caps** — prevents runaway OpenAI spend
+- **Session-level rate limiting** in the Streamlit UI (10 req/session default)
+- **Graceful JSON fallback** — Node 4 handles malformed quality review responses
+- **Non-root Docker user** — security-hardened container
+- **GitHub Actions CI** — runs tests + basic secret scan on every push
+- **MIT licensed**
+
+---
+
+## Quick Start
+
+### Option 1: Local (Python)
 
 ```bash
 git clone https://github.com/SKcoder6344/contentkosh-agent
@@ -59,91 +67,94 @@ cd contentkosh-agent
 
 pip install -r requirements.txt
 
-# Set your OpenAI API key
 export OPENAI_API_KEY="your-key-here"
 
-python agent.py
+# Streamlit UI
+make run
+
+# CLI demo
+make demo
+```
+
+### Option 2: Docker
+
+```bash
+docker build -t contentkosh-agent .
+docker run -p 8501:8501 -e OPENAI_API_KEY="your-key-here" contentkosh-agent
+# → Open http://localhost:8501
 ```
 
 ---
 
-## Usage
+## Folder Structure
+
+```
+contentkosh-agent/
+├── agent.py                  # Core pipeline (4 LangGraph nodes)
+├── app.py                    # Streamlit UI
+├── requirements.txt          # Pinned dependencies
+├── Makefile                  # Dev shortcuts (run, test, docker-build…)
+├── Dockerfile                # Multi-stage production container
+├── LICENSE                   # MIT
+├── metrics.csv               # Manual vs. agent performance comparison
+├── tests/
+│   └── test_agent.py         # pytest unit tests (mocked LLM)
+└── .github/
+    └── workflows/
+        └── ci.yml            # GitHub Actions: test + secret scan
+```
+
+---
+
+## API Usage
 
 ```python
 from agent import run_agent
 
 output = run_agent(
-    topic="Fundamental Rights in India",
-    subject="Indian Polity",
-    exam_target="UPSC",
+    topic="Photosynthesis",
+    subject="Biology",
+    exam_target="NEET",
     num_mcqs=5
 )
 print(output)
 ```
 
-**Supported exam targets:** UPSC, SSC CGL, CUET, Class 10 Boards, State PCS, NEET, JEE
-
 ---
 
-## Sample Output
+## Performance
 
-```
-╔══════════════════════════════════════════╗
-   CONTENTKOSH — AI CONTENT PACKAGE
-   Topic   : Fundamental Rights in India
-   Subject : Indian Polity
-   Exam    : UPSC
-   Quality : Good
-╚══════════════════════════════════════════╝
-
-━━━━━━━━━━━━ STUDY NOTES ━━━━━━━━━━━━
-
-Fundamental Rights are guaranteed under Part III (Articles 12–35)...
-• Right to Equality (Art. 14–18)...
-• Right to Freedom (Art. 19–22)...
-...
-
-━━━━━━━━━━━━ MCQ TEST SET ━━━━━━━━━━━
-
-Q1. Which Article abolishes untouchability?
-(A) Art. 14  (B) Art. 17  (C) Art. 19  (D) Art. 21
-Answer: B
-Explanation: Article 17 abolishes untouchability in any form...
-...
-
-━━━━━━━━━━━━ QUALITY REVIEW ━━━━━━━━━
-
-Status  : Good
-Summary : Content is accurate and exam-relevant for UPSC...
-```
-
----
-
-## Why LangGraph (not a simple chain)?
-
-| Feature | Simple LLM Call | This Agent |
+| Metric | Manual Process | This Agent |
 |---|---|---|
-| State shared across steps | ❌ | ✅ MCQs use notes as context |
-| Modular — swap any node | ❌ | ✅ Add translation node, difficulty selector |
-| Quality gate before output | ❌ | ✅ Review node flags errors |
-| Scale to parallel branches | ❌ | ✅ LangGraph supports async + parallel nodes |
-
-This architecture scales directly to ContentKosh's LMS pipeline — each node can become a tool (n8n trigger, database write, content validator).
+| Content package creation | 3–4 hours | ~45 seconds |
+| MCQ generation per topic | 15–20 min | ~5 seconds |
+| Factual accuracy check | Manual review | Automated (Node 3) |
+| Scale (topics/day) | 10–15 | 100+ |
 
 ---
-## Extensibility: ContentKosh Roadmap Alignment
+
+## Roadmap Alignment
 
 | Current Node | Future Extension | Business Value |
-|--------------|------------------|----------------|
-| `generate_notes` | Add `generate_flashcards` | Spaced repetition feature |
-| `review_quality` | `plagiarism_check` node | Originality compliance |
-| `assemble_package` | `translate_to_hindi` node | Regional language expansion |
-| New Node: `difficulty_adjuster` | Dynamically scale JEE vs Class 10 | Single agent, multiple exams |
+|---|---|---|
+| `generate_notes` | `generate_flashcards` | Spaced repetition feature |
+| `review_quality` | `plagiarism_check` | Originality compliance |
+| `assemble_package` | `translate_to_hindi` | Regional language expansion |
+| New: `difficulty_adjuster` | Scale JEE vs Class 10 | Single agent, multiple exams |
 
-The graph architecture supports these as drop-in nodes without pipeline rewrites.
+---
+
+## Running Tests
+
+```bash
+make test
+# → pytest tests/ -v --cov=agent
+```
+
+---
 
 ## Author
 
-**Sujal Kumar Nayak**
-GitHub: [github.com/SKcoder6344](https://github.com/SKcoder6344)
+**Sujal Kumar Nayak**  
+GitHub: [github.com/SKcoder6344](https://github.com/SKcoder6344)  
 Email: nayaksujalkumar@gmail.com
